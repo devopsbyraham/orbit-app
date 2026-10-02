@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#080b10">
+    <meta name="description" content="Movies, journeys, TV and mobile in one place.">
+    <title>Orbit — a better kind of everyday</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="preconnect" href="https://images.unsplash.com">
+    <link rel="stylesheet" href="/styles.css">
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
+    <script src="/app.js" defer></script>
+</head>
+
+<body>
+    <header class="topbar">
+        <a class="brand" href="#discover" aria-label="Orbit home"><span class="brand-mark"><i
+                    data-lucide="orbit"></i></span><span>orbit<span class="brand-period">.</span></span></a>
+        <nav class="main-nav" aria-label="Main navigation">
+            <button class="nav-link active" data-view="discover" aria-label="Discover" title="Discover"><i
+                    data-lucide="compass"></i><span class="nav-label">Discover</span></button>
+            <button class="nav-link" data-view="activity" aria-label="My activity" title="My activity"><i
+                    data-lucide="history"></i><span class="nav-label">My activity</span></button>
+        </nav>
+        <div class="top-actions">
+            <button class="icon-button notification-button" id="notifications-button" aria-label="Notifications"
+                title="Notifications"><i data-lucide="bell"></i><span class="notification-dot"></span></button>
+            <button class="account-button" id="account-button" aria-label="Account" title="Account"><span
+                    class="account-avatar">G</span><span id="account-label">Sign in</span><i
+                    data-lucide="chevron-down"></i></button>
+        </div>
+    </header>
+
+    <main>
+        <section class="welcome-band" id="welcome-band">
+            <div class="welcome-copy">
+                <div class="eyebrow"><span class="eyebrow-dot"></span><span id="today-label">YOUR DAY, WELL SPENT</span>
+                </div>
+                <h1>Make room for<br><em>the good stuff.</em></h1>
+                <p>What are we setting up today?</p>
+                <div class="hero-shortcuts" aria-label="Popular services">
+                    <button data-service="movies"><i data-lucide="clapperboard"></i> Movie night</button>
+                    <button data-service="trains"><i data-lucide="train-front"></i> Next stop</button>
+                </div>
+            </div>
+            <div class="welcome-art" aria-label="A cinema ready for movie night" role="img">
+                <div class="art-note"><span>YOUR NEXT<br>GOOD NIGHT</span><i data-lucide="sparkles"></i></div>
+                <div class="art-caption"><span>THU, 7:30 PM</span><strong>A seat with your name on it.</strong></div>
+            </div>
+            <div class="hero-index"><span>01</span><span class="index-rule"></span><span>04</span></div>
+        </section>
+
+        <section class="service-section" id="service-section">
+            <div class="section-heading">
+                <div><span class="eyebrow">THE EVERYDAY, SORTED</span>
+                    <h2>Pick your next move</h2>
+                </div>
+                <div class="service-meta"><span class="live-dot"></span><span>All your essentials, in orbit</span></div>
+            </div>
+            <div class="service-tabs" role="tablist" aria-label="Choose a service">
+                <button class="service-tab selected" role="tab" aria-selected="true" data-service="movies"><i
+                        data-lucide="clapperboard"></i><span>Movies</span></button>
+                <button class="service-tab" role="tab" aria-selected="false" data-service="trains"><i
+                        data-lucide="train-front"></i><span>Trains</span></button>
+                <button class="service-tab" role="tab" aria-selected="false" data-service="dth"><i
+                        data-lucide="tv"></i><span>DTH</span></button>
+                <button class="service-tab" role="tab" aria-selected="false" data-service="recharge"><i
+                        data-lucide="smartphone"></i><span>Recharge</span></button>
+                <label class="search-box"><i data-lucide="search"></i><input id="search-input" type="search"
+                        placeholder="Search movies, places, plans" autocomplete="off"><kbd>/</kbd></label>
+            </div>
+            <div class="content-toolbar">
+                <div id="result-heading"><span class="eyebrow">ON THE BIG SCREEN</span>
+                    <h3>Worth going out for</h3>
+                </div>
+                <div class="toolbar-actions"><button id="data-check-button" class="sort-button"
+                        title="Inspect your database records"><i data-lucide="database"></i><span>DB
+                            check</span></button><button id="sort-button" class="sort-button"><i
+                            data-lucide="arrow-up-down"></i><span>Top
+                            picks</span></button></div>
+            </div>
+            <div id="content" class="service-content" aria-live="polite">
+                <div class="loading-state"><span class="loader"></span>Finding the good stuff</div>
+            </div>
+        </section>
+
+        <section class="bottom-strip" aria-label="Orbit services">
+            <div class="strip-symbol"><i data-lucide="move-up-right"></i></div>
+            <p><span class="eyebrow">A LITTLE MORE IN SYNC</span><strong>Small errands. Big plans. All in
+                    orbit.</strong></p>
+            <div class="strip-services"><span>01 / WATCH</span><span>02 / GO</span><span>03 / CONNECT</span></div>
+        </section>
+    </main>
+
+    <footer><a class="brand footer-brand" href="#discover"><span class="brand-mark"><i
+                    data-lucide="orbit"></i></span><span>orbit<span class="brand-period">.</span></span></a><span>Made
+            for wherever the day takes you.</span><span class="footer-status"><span class="live-dot"></span> Everything
+            is looking good</span></footer>
+
+    <dialog class="dialog" id="auth-dialog" aria-labelledby="auth-title">
+        <form class="dialog-frame" id="auth-form">
+            <button class="dialog-close" type="button" data-close aria-label="Close"><i data-lucide="x"></i></button>
+            <div class="dialog-kicker"><span class="brand-mark"><i data-lucide="orbit"></i></span><span>YOUR SPACE IN
+                    ORBIT</span></div>
+            <h2 id="auth-title">Good to have you.</h2>
+            <p class="dialog-intro" id="auth-description">Sign in to pick up where you left off.</p>
+            <div id="name-field" class="field-wrap hidden"><label for="auth-name">Your name</label><input id="auth-name"
+                    name="name" autocomplete="name" minlength="2"></div>
+            <div class="field-wrap"><label for="auth-email">Email address</label><input id="auth-email" name="email"
+                    type="email" autocomplete="email" required></div>
+            <div class="field-wrap"><label for="auth-password">Password</label><input id="auth-password" name="password"
+                    type="password" autocomplete="current-password" minlength="8" required></div>
+            <p class="form-error" id="auth-error" role="alert"></p>
+            <button class="primary-button full-button" id="auth-submit" type="submit">Sign in <i
+                    data-lucide="arrow-right"></i></button>
+            <p class="switch-auth"><span id="switch-copy">New around here?</span> <button type="button"
+                    id="switch-auth">Create an account</button></p>
+        </form>
+    </dialog>
+
+    <dialog class="dialog" id="checkout-dialog" aria-labelledby="checkout-title">
+        <form class="dialog-frame" id="checkout-form">
+            <button class="dialog-close" type="button" data-close aria-label="Close"><i data-lucide="x"></i></button>
+            <div class="dialog-kicker"><span class="brand-mark"><i data-lucide="orbit"></i></span><span
+                    id="checkout-kicker">JUST ONE MORE THING</span></div>
+            <h2 id="checkout-title">Make it yours.</h2>
+            <p class="dialog-intro" id="checkout-summary"></p>
+            <div id="checkout-field" class="field-wrap hidden"><label for="checkout-phone">Mobile number</label><input
+                    id="checkout-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel"
+                    placeholder="10-digit number"></div>
+            <div class="checkout-total"><span id="checkout-total-label">Total</span><strong
+                    id="checkout-total"></strong></div>
+            <p class="form-error" id="checkout-error" role="alert"></p>
+            <button class="primary-button full-button" id="checkout-submit" type="submit">Confirm booking <i
+                    data-lucide="arrow-right"></i></button>
+            <p class="fine-print">Demo checkout. No payment will be collected.</p>
+        </form>
+    </dialog>
+
+    <dialog class="dialog notification-dialog" id="notification-dialog" aria-labelledby="notification-title">
+        <div class="dialog-frame">
+            <button class="dialog-close" type="button" data-close aria-label="Close"><i data-lucide="x"></i></button>
+            <div class="dialog-kicker"><span class="brand-mark"><i data-lucide="bell"></i></span><span>UP TO THE
+                    MINUTE</span></div>
+            <h2 id="notification-title">A little update.</h2>
+            <div id="notification-list" class="notification-list"></div>
+        </div>
+    </dialog>
+
+    <dialog class="dialog database-dialog" id="database-dialog" aria-labelledby="database-title">
+        <div class="dialog-frame">
+            <button class="dialog-close" type="button" data-close aria-label="Close"><i data-lucide="x"></i></button>
+            <div class="dialog-kicker"><span class="brand-mark"><i data-lucide="database"></i></span><span>READ-ONLY
+                    SERVICE CHECK</span></div>
+            <h2 id="database-title">Check service data.</h2>
+            <p class="dialog-intro">Inspect records linked to your signed-in account.</p>
+            <div class="field-wrap">
+                <label for="database-service">Service data</label>
+                <select id="database-service">
+                    <option value="account">Account profile</option>
+                    <option value="movies">Movie bookings</option>
+                    <option value="trains">Train bookings</option>
+                    <option value="dth">DTH bookings</option>
+                    <option value="recharge">Recharge orders</option>
+                    <option value="notifications">Notifications</option>
+                    <option value="bookings">All bookings</option>
+                </select>
+            </div>
+            <p class="database-command" id="database-command"></p>
+            <button class="primary-button full-button" id="run-database-check" type="button"><i
+                    data-lucide="play"></i>Run check</button>
+            <p class="database-result-meta" id="database-result-meta" aria-live="polite">No check run yet.</p>
+            <pre class="database-result" id="database-result" aria-live="polite">Select a service and run a check.</pre>
+        </div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+
+</html>

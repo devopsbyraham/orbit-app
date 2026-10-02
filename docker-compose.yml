@@ -1,0 +1,162 @@
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - gateway
+    restart: unless-stopped
+
+  gateway:
+    build:
+      context: .
+      dockerfile: services/Dockerfile
+      args:
+        SERVICE_PATH: gateway
+    environment:
+      PORT: 3000
+      IDENTITY_URL: http://identity:4001
+      MOVIES_URL: http://movies:4002
+      TRAINS_URL: http://trains:4003
+      DTH_URL: http://dth:4004
+      RECHARGE_URL: http://recharge:4005
+      BOOKINGS_URL: http://bookings:4006
+      NOTIFICATIONS_URL: http://notifications:4007
+    ports:
+      - "3000:3000"
+    depends_on:
+      - identity
+      - movies
+      - trains
+      - dth
+      - recharge
+      - bookings
+      - notifications
+    restart: unless-stopped
+
+  identity:
+    build:
+      context: .
+      dockerfile: services/Dockerfile
+      args:
+        SERVICE_PATH: identity
+    environment:
+      PORT: 4001
+      DB_HOST: mysql
+      DB_NAME: orbit
+      DB_USER: orbit
+      DB_PASSWORD: orbit_local
+      JWT_SECRET: ${JWT_SECRET:-replace-this-secret-before-deploying}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  movies:
+    build:
+      context: .
+      dockerfile: services/Dockerfile
+      args:
+        SERVICE_PATH: movies
+    environment:
+      PORT: 4002
+    restart: unless-stopped
+
+  trains:
+    build:
+      context: .
+      dockerfile: services/Dockerfile
+      args:
+        SERVICE_PATH: trains
+    environment:
+      PORT: 4003
+    restart: unless-stopped
+
+  dth:
+    build:
+      context: .
+      dockerfile: services/Dockerfile
+      args:
+        SERVICE_PATH: dth
+    environment:
+      PORT: 4004
+    restart: unless-stopped
+
+  recharge:
+    build:
+      context: .
+      dockerfile: services/Dockerfile
+      args:
+        SERVICE_PATH: recharge
+    environment:
+      PORT: 4005
+      DB_HOST: mysql
+      DB_NAME: orbit
+      DB_USER: orbit
+      DB_PASSWORD: orbit_local
+      JWT_SECRET: ${JWT_SECRET:-replace-this-secret-before-deploying}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  bookings:
+    build:
+      context: .
+      dockerfile: services/Dockerfile
+      args:
+        SERVICE_PATH: bookings
+    environment:
+      PORT: 4006
+      DB_HOST: mysql
+      DB_NAME: orbit
+      DB_USER: orbit
+      DB_PASSWORD: orbit_local
+      JWT_SECRET: ${JWT_SECRET:-replace-this-secret-before-deploying}
+      NOTIFICATIONS_URL: http://notifications:4007
+    depends_on:
+      mysql:
+        condition: service_healthy
+      notifications:
+        condition: service_started
+    restart: unless-stopped
+
+  notifications:
+    build:
+      context: .
+      dockerfile: services/Dockerfile
+      args:
+        SERVICE_PATH: notifications
+    environment:
+      PORT: 4007
+      DB_HOST: mysql
+      DB_NAME: orbit
+      DB_USER: orbit
+      DB_PASSWORD: orbit_local
+      JWT_SECRET: ${JWT_SECRET:-replace-this-secret-before-deploying}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: orbit
+      MYSQL_USER: orbit
+      MYSQL_PASSWORD: orbit_local
+      MYSQL_ROOT_PASSWORD: root_local
+    volumes:
+      - orbit_mysql:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-porbit_local"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  orbit_mysql:

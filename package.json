@@ -1,0 +1,22 @@
+{
+    "name": "orbit-services",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Orbit consumer services microservice platform",
+    "scripts": {
+        "start:gateway": "node services/gateway/index.js",
+        "start:identity": "node services/identity/index.js",
+        "start:movies": "node services/movies/index.js",
+        "start:trains": "node services/trains/index.js",
+        "start:dth": "node services/dth/index.js",
+        "start:recharge": "node services/recharge/index.js",
+        "start:bookings": "node services/bookings/index.js",
+        "start:notifications": "node services/notifications/index.js"
+    },
+    "dependencies": {
+        "bcryptjs": "^2.4.3",
+        "express": "^5.1.0",
+        "jsonwebtoken": "^9.0.2",
+        "mysql2": "^3.14.0"
+    }
+}
