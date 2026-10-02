@@ -1,0 +1,248 @@
+name: CI
+
+on:
+    push:
+        branches: [main, master]
+    pull_request:
+    workflow_dispatch:
+
+concurrency:
+    group: ci-${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+permissions:
+    contents: read
+
+jobs:
+    quality:
+        name: Dependencies and syntax
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Check out source
+              uses: actions/checkout@v4
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+
+            - name: Cache npm download cache
+              uses: actions/cache@v4
+              with:
+                  path: ~/.npm
+                  key: ${{ runner.os }}-npm-${{ hashFiles('package.json') }}
+                  restore-keys: |
+                      ${{ runner.os }}-npm-
+
+            - name: Create a lockfile for this run
+              run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+            - name: Install locked dependencies
+              run: npm ci --ignore-scripts --no-audit --no-fund
+
+            - name: Audit npm dependencies
+              run: npm audit --audit-level=high
+
+            - name: Check JavaScript syntax
+              run: find services frontend -type f -name '*.js' -print0 | xargs -0 -n 1 node --check
+
+    sast:
+        name: CodeQL SAST
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        permissions:
+            actions: read
+            contents: read
+            security-events: write
+        steps:
+            - name: Check out source
+              uses: actions/checkout@v4
+
+            - name: Initialize CodeQL
+              uses: github/codeql-action/init@v3
+              with:
+                  languages: javascript-typescript
+                  build-mode: none
+
+            - name: Analyze source
+              uses: github/codeql-action/analyze@v3
+              with:
+                  category: /language:javascript-typescript
+
+    secrets:
+        name: Secret scanning
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        steps:
+            - name: Check out full history
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Scan history for secrets
+              uses: gitleaks/gitleaks-action@v2
+
+    source-scan:
+        name: Dependency and Dockerfile scan
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Check out source
+              uses: actions/checkout@v4
+
+            - name: Scan dependencies and configuration
+              uses: aquasecurity/trivy-action@0.28.0
+              with:
+                  scan-type: fs
+                  scan-ref: .
+                  scanners: vuln,misconfig
+                  severity: HIGH,CRITICAL
+                  ignore-unfixed: true
+                  exit-code: "1"
+
+    image-build:
+        name: Build and scan ${{ matrix.image.name }}
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+        permissions:
+            contents: read
+            security-events: write
+        strategy:
+            fail-fast: false
+            matrix:
+                image:
+                    - name: frontend
+                      context: ./frontend
+                      file: ./frontend/Dockerfile
+                    - name: gateway
+                      context: .
+                      file: ./services/Dockerfile
+                      service_path: gateway
+                    - name: identity
+                      context: .
+                      file: ./services/Dockerfile
+                      service_path: identity
+                    - name: movies
+                      context: .
+                      file: ./services/Dockerfile
+                      service_path: movies
+                    - name: trains
+                      context: .
+                      file: ./services/Dockerfile
+                      service_path: trains
+                    - name: dth
+                      context: .
+                      file: ./services/Dockerfile
+                      service_path: dth
+                    - name: recharge
+                      context: .
+                      file: ./services/Dockerfile
+                      service_path: recharge
+                    - name: bookings
+                      context: .
+                      file: ./services/Dockerfile
+                      service_path: bookings
+                    - name: notifications
+                      context: .
+                      file: ./services/Dockerfile
+                      service_path: notifications
+        steps:
+            - name: Check out source
+              uses: actions/checkout@v4
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Build ${{ matrix.image.name }} image
+              uses: docker/build-push-action@v6
+              with:
+                  context: ${{ matrix.image.context }}
+                  file: ${{ matrix.image.file }}
+                  build-args: |
+                      SERVICE_PATH=${{ matrix.image.service_path }}
+                  tags: orbit-ci:${{ matrix.image.name }}
+                  load: true
+                  cache-from: type=gha,scope=${{ matrix.image.name }}
+                  cache-to: type=gha,mode=max,scope=${{ matrix.image.name }}
+
+            - name: Scan image for vulnerabilities
+              uses: aquasecurity/trivy-action@0.28.0
+              with:
+                  image-ref: orbit-ci:${{ matrix.image.name }}
+                  scan-type: image
+                  scanners: vuln
+                  severity: HIGH,CRITICAL
+                  ignore-unfixed: true
+                  format: sarif
+                  output: trivy-${{ matrix.image.name }}.sarif
+                  exit-code: "1"
+
+            - name: Upload image scan results to code scanning
+              if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false }}
+              uses: github/codeql-action/upload-sarif@v3
+              with:
+                  sarif_file: trivy-${{ matrix.image.name }}.sarif
+                  category: trivy-${{ matrix.image.name }}
+
+    integration-dast:
+        name: Compose integration and DAST
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+        steps:
+            - name: Check out source
+              uses: actions/checkout@v4
+
+            - name: Build and start application stack
+              run: docker compose up --build --detach
+
+            - name: Wait for frontend and gateway health
+              run: |
+                  curl --fail --silent --show-error --retry 30 --retry-connrefused --retry-delay 2 --retry-max-time 90 http://127.0.0.1:8080/
+                  curl --fail --silent --show-error --retry 30 --retry-connrefused --retry-delay 2 --retry-max-time 90 http://127.0.0.1:3000/health
+
+            - name: Smoke-test catalog APIs through gateway
+              run: |
+                node --input-type=module <<'NODE'
+                import assert from 'node:assert/strict';
+
+                const checks = [
+                  ['/health', 'status', 'ok'],
+                  ['/api/movies', 'movies'],
+                  ['/api/trains', 'trains'],
+                  ['/api/dth', 'plans'],
+                  ['/api/recharge/plans', 'plans']
+                ];
+
+                for (const [path, key, expected] of checks) {
+                  const response = await fetch(`http://127.0.0.1:3000${path}`);
+                  assert.equal(response.status, 200, `${path} should return HTTP 200`);
+                  const body = await response.json();
+                  if (expected) {
+                    assert.equal(body[key], expected, `${path} should report healthy status`);
+                  } else {
+                    assert.ok(Array.isArray(body[key]) && body[key].length > 0, `${path} should return a non-empty ${key} array`);
+                  }
+                  console.log(`Passed ${path}`);
+                  done
+                NODE
+
+            - name: Run OWASP ZAP baseline scan
+              run: |
+                  docker run --network host --rm \
+                    -v "$PWD:/zap/wrk/:rw" \
+                    ghcr.io/zaproxy/zaproxy:stable \
+                    zap-baseline.py -t http://127.0.0.1:8080 -I -J zap-report.json
+
+            - name: Upload DAST report
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: zap-dast-report
+                  path: zap-report.json
+                  if-no-files-found: ignore
+                  retention-days: 14
+
+            - name: Stop application stack
+              if: always()
+              run: docker compose down --volumes --remove-orphans
