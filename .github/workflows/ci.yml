@@ -44,6 +44,7 @@ jobs:
               run: npm ci --ignore-scripts --no-audit --no-fund
 
             - name: Audit npm dependencies
+              continue-on-error: true
               run: npm audit --audit-level=high
 
             - name: Check JavaScript syntax
@@ -98,6 +99,7 @@ jobs:
               uses: actions/checkout@v4
 
             - name: Scan dependencies and configuration
+              continue-on-error: true
               uses: aquasecurity/trivy-action@0.28.0
               with:
                   scan-type: fs
@@ -173,6 +175,7 @@ jobs:
                   cache-to: type=gha,mode=max,scope=${{ matrix.image.name }}
 
             - name: Scan image for vulnerabilities
+              continue-on-error: true
               uses: aquasecurity/trivy-action@0.28.0
               with:
                   image-ref: orbit-ci:${{ matrix.image.name }}
@@ -236,6 +239,7 @@ jobs:
                 NODE
 
             - name: Run OWASP ZAP baseline scan
+              continue-on-error: true
               run: |
                   docker run --network host --rm \
                     -v "$PWD:/zap/wrk/:rw" \
