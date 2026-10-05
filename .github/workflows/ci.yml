@@ -100,7 +100,7 @@ jobs:
 
             - name: Scan dependencies and configuration
               continue-on-error: true
-              uses: aquasecurity/trivy-action@0.28.0
+              uses: aquasecurity/setup-trivy@e07451d2e059ed86c2870430ea286b3a9e0bf241
               with:
                   scan-type: fs
                   scan-ref: .
@@ -176,7 +176,7 @@ jobs:
 
             - name: Scan image for vulnerabilities
               continue-on-error: true
-              uses: aquasecurity/trivy-action@0.28.0
+              uses: aquasecurity/setup-trivy@e07451d2e059ed86c2870430ea286b3a9e0bf241
               with:
                   image-ref: orbit-ci:${{ matrix.image.name }}
                   scan-type: image
